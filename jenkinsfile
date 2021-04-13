@@ -50,6 +50,7 @@ pipeline{
               archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
           }
+          */
         stage ('deploy to artifactory'){
             steps{
                 script{
@@ -79,7 +80,7 @@ pipeline{
                         "files":[
                             {
                               "pattern": "art-doc-dev-local2/todo-app/**",
-                                    "target": "app/artifacts/"
+                                    "target": "app/target/"
                              }
                         ]
                     }''',
@@ -87,7 +88,7 @@ pipeline{
             }
         }
     
-*/
+
         
         stage('Docker build'){
             steps{
