@@ -107,7 +107,8 @@ pipeline{
                    sh "docker login -u choprachirag002 -p ${dockerHubPWD}"
 
                 }
-                sh "docker tag todo-app choprachirag002/todo-app"
+                sh "docker commit todoapp1 choprachirag002/todo-app"
+                
                 sh "docker push choprachirag002/todo-app"
 
             }
