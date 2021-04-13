@@ -1,61 +1,129 @@
 pipeline{
-    agent any;
-     tools{
-       maven 'maven'
-       jdk 'JDK11'
-   }
-    stages{
-        stage('Fetch project from github'){
-            steps{
-                git branch: 'master', url: 'https://github.com/sujjadshaik/todo-app.git'
-            }
-                
-        }
-        stage('Maven package'){
-            steps{
-                sh 'mvn -f app/pom.xml package'
+    agent any
+    
+    triggers{
+        pollSCM('* * * * *')
+    }
 
+    tools{
+        maven 'maven'
+        jdk 'java11'
+    }
+
+    stages{
+        stage('maven-clean'){
+            steps{
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                sh 'mvn clean'
             }
         }
-        stage('sonar analysis'){
+         stage('maven-validate'){
             steps{
-                withSonarQubeEnv('sonarQube'){
-                    sh 'mvn -f app/pom.xml sonar:sonar'
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                sh 'mvn validate'
+            }
+        }
+         stage('maven-compile'){
+            steps{
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                sh 'mvn compile'
+            }
+        }
+        stage('maven-test'){
+            steps{
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                sh 'mvn test'
+            }
+        }
+        stage('maven-package'){
+            steps{
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                sh 'mvn package'
+            }
+        }
+        stage('maven-install'){
+            steps{
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                sh 'mvn install'
+            }
+        }
+        stage('sonar-analysis'){
+            steps{
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                withSonarQubeEnv('sonarqube1'){
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
-        stage('deploy to artifactor'){
+        stage("quality-gate") {
+            steps {
+                script{
+                    last_started=env.STAGE_NAME
+                }
+              timeout(time: 1, unit: 'HOURS') {
+                waitForQualityGate abortPipeline: true
+              }
+            }
+          }
+        stage("collect-artifacts") {
+            steps {
+                script{
+                    last_started=env.STAGE_NAME
+                }
+              archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+            }
+          }
+        stage ('deploy to artifactory'){
             steps{
-                rtUpload (
-            serverId: 'ARTIFACTORY-SERVER',
-            spec: '''{
-                 "files": [
-                             {
-                                "pattern": "app/target/*.war",
-                                "target": "art-doc-dev-loc/todo-app/"
-                            }
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                rtUpload(
+                    serverId: 'artifactoryserver',
+                    spec: '''{
+                        "files":[
+                            {
+                              "pattern": "target/*.jar",
+                                "target": "art-doc-dev-local2"
+                             }
                         ]
-            }''',
-            )
-
+                    }''',
+                )
             }
-        }
-        stage('download artifact'){
+        } 
+        stage ('download to artifacts folder'){
             steps{
-                 rtDownload (
-                 serverId: "ARTIFACTORY-SERVER",
-                spec:"""{
-                     "files": [
-                                {
-                                    "pattern": "art-doc-dev-loc/todo-app/**",
-                                    "target": "app/artifacts/"      
-                                }
-                            ]
-              }"""
-            )
-            
+                script{
+                    last_started=env.STAGE_NAME
+                }
+                rtDownload(
+                    serverId: 'artifactoryserver',
+                    spec: '''{
+                        "files":[
+                            {
+                              "pattern": "art-doc-dev-local2/",
+                                 "target": "artifacts/"
+                             }
+                        ]
+                    }''',
+                )
             }
         }
+    
 
         
         stage('Docker build'){
@@ -86,13 +154,13 @@ pipeline{
                 sh 'chmod +x change-tag.sh'
                 sh """./change-tag.sh v${env.BUILD_ID}"""
                 sh 'cat k8s/api-deployment.yaml'
-                withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kube-azure', namespace: '', serverUrl: 'https://content-jackal-k8s-656e8d92.hcp.westus2.azmk8s.io:443') {
+                withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kube-azure', namespace: '', serverUrl: 'https://immune-locust-k8s-11072721.hcp.westus2.azmk8s.io:443') {
                                 // some block
                     sh 'kubectl apply -f k8s/database-deployment.yaml'
                     
                 }
                 sleep(120)
-                withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kube-azure', namespace: '', serverUrl: 'https://content-jackal-k8s-656e8d92.hcp.westus2.azmk8s.io:443') {
+                withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kube-azure', namespace: '', serverUrl: 'https://immune-locust-k8s-11072721.hcp.westus2.azmk8s.io:443') {
                                 // some block
                     sh 'kubectl apply -f k8s/api-deployment.yaml'
                     sh 'kubectl get pods'
