@@ -107,16 +107,16 @@ pipeline{
                    sh "docker login -u choprachirag002 -p ${dockerHubPWD}"
 
                 }
-                sh "docker tag todo_app choprachirag002/todo-app:v${env.BUILD_ID}"
-                sh "docker push choprachirag002/todo-app:v${env.BUILD_ID}"
+                sh "docker tag todo_app choprachirag002/todo-app"
+                sh "docker push choprachirag002/todo-app"
 
             }
         }
         stage('deploying it to kubernetes'){
             steps{
-                sh 'chmod +x change-tag.sh'
+                /*sh 'chmod +x change-tag.sh'
                 sh """./change-tag.sh v${env.BUILD_ID}"""
-                sh 'cat k8s/api-deployment.yaml'
+                sh 'cat k8s/api-deployment.yaml'*/
                 withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kube-azure', namespace: '', serverUrl: 'https://immune-locust-k8s-11072721.hcp.westus2.azmk8s.io:443') {
                                 // some block
                     sh 'kubectl apply -f k8s/database-deployment.yaml'
