@@ -108,7 +108,7 @@ pipeline{
                    bat "docker login -u choprachirag002 -p ${dockerHubPWD}"
 
                 }
-                bat "docker tag kubernetes2_app choprachirag002/todo-app"
+                bat "docker tag kubernetes_app choprachirag002/todo-app"
                 
                 bat "docker push choprachirag002/todo-app"
 
