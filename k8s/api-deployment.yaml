@@ -19,7 +19,7 @@ spec:
         env:
           - name: MYSQL_DB_HOST
             value: mysql:3306
-        image: choprachirag002/todo-app
+        image: choprachirag002/todo-app/latest
 ---
 apiVersion: v1
 kind: Service
