@@ -20,7 +20,7 @@ pipeline{
         }
         
         
-      /*  stage('sonar-analysis'){
+        stage('sonar-analysis'){
             steps{
                 script{
                     last_started=env.STAGE_NAME
@@ -48,7 +48,7 @@ pipeline{
               archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
           }
-          */
+          
         stage ('deploy to artifactory'){
             steps{
                 script{
